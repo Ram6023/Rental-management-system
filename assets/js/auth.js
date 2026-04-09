@@ -27,7 +27,7 @@ async function getProfile(userId) {
     return data;
 }
 
-/** Sign up a new user */
+/** Sign up a new user — creates auth user + profile row */
 async function signUp(email, password, name, phone, role) {
     const { data, error } = await sb.auth.signUp({
         email,
@@ -37,6 +37,18 @@ async function signUp(email, password, name, phone, role) {
         }
     });
     if (error) throw error;
+
+    // Create profile row client-side (no trigger needed)
+    if (data.user) {
+        const { error: profileError } = await sb.from('profiles').upsert({
+            id: data.user.id,
+            name: name || 'User',
+            phone: phone || '',
+            role: role || 'tenant'
+        }, { onConflict: 'id' });
+        if (profileError) console.warn('Profile create warning:', profileError.message);
+    }
+
     return data;
 }
 

@@ -1,22 +1,28 @@
 -- ============================================
--- RentEase — Supabase Auth + PostgreSQL Schema
+-- RentEase — Supabase Schema (NO TRIGGER VERSION)
 -- ============================================
--- CLEAN UP any previous failed attempts first
+-- Profiles are created from the client JS, not triggers.
+-- This avoids all trigger-related errors.
 -- ============================================
+
+-- CLEAN UP
 DROP TABLE IF EXISTS wishlist CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS properties CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
-DROP FUNCTION IF EXISTS is_admin();
+DROP FUNCTION IF EXISTS is_admin() CASCADE;
 DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
+
+-- Remove old trigger if exists
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
 -- ============================================
 -- 1. PROFILES TABLE
 -- ============================================
 CREATE TABLE profiles (
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    name TEXT NOT NULL,
+    id UUID PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT 'User',
     phone TEXT DEFAULT '',
     role TEXT NOT NULL DEFAULT 'tenant' CHECK (role IN ('admin', 'owner', 'tenant')),
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -30,11 +36,11 @@ CREATE POLICY "Anyone can read profiles"
 CREATE POLICY "Users can update own profile"
     ON profiles FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Allow insert for authenticated users"
+CREATE POLICY "Users can insert own profile"
     ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- ============================================
--- 2. HELPER FUNCTION (uses plpgsql for late binding)
+-- 2. ADMIN HELPER
 -- ============================================
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
@@ -46,28 +52,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
--- 3. AUTO-CREATE PROFILE ON SIGNUP
--- ============================================
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO profiles (id, name, phone, role)
-    VALUES (
-        NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'name', 'User'),
-        COALESCE(NEW.raw_user_meta_data->>'phone', ''),
-        COALESCE(NEW.raw_user_meta_data->>'role', 'tenant')
-    );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
-
--- ============================================
--- 4. PROPERTIES TABLE
+-- 3. PROPERTIES
 -- ============================================
 CREATE TABLE properties (
     id SERIAL PRIMARY KEY,
@@ -86,27 +71,15 @@ CREATE TABLE properties (
 
 ALTER TABLE properties ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can read properties"
-    ON properties FOR SELECT USING (true);
-
-CREATE POLICY "Owners can insert own properties"
-    ON properties FOR INSERT WITH CHECK (
-        auth.uid() = owner_id AND
-        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('owner', 'admin'))
-    );
-
-CREATE POLICY "Owners can update own properties"
-    ON properties FOR UPDATE USING (
-        auth.uid() = owner_id OR is_admin()
-    );
-
-CREATE POLICY "Owners can delete own properties"
-    ON properties FOR DELETE USING (
-        auth.uid() = owner_id OR is_admin()
-    );
+CREATE POLICY "Anyone can read properties" ON properties FOR SELECT USING (true);
+CREATE POLICY "Owners can insert" ON properties FOR INSERT WITH CHECK (
+    auth.uid() = owner_id AND EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('owner', 'admin'))
+);
+CREATE POLICY "Owners can update" ON properties FOR UPDATE USING (auth.uid() = owner_id OR is_admin());
+CREATE POLICY "Owners can delete" ON properties FOR DELETE USING (auth.uid() = owner_id OR is_admin());
 
 -- ============================================
--- 5. MESSAGES TABLE
+-- 4. MESSAGES
 -- ============================================
 CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
@@ -119,20 +92,12 @@ CREATE TABLE messages (
 );
 
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can read own messages"
-    ON messages FOR SELECT USING (
-        auth.uid() = sender_id OR auth.uid() = receiver_id
-    );
-
-CREATE POLICY "Authenticated users can send messages"
-    ON messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
-
-CREATE POLICY "Receivers can mark as read"
-    ON messages FOR UPDATE USING (auth.uid() = receiver_id);
+CREATE POLICY "Read own" ON messages FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+CREATE POLICY "Send" ON messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "Mark read" ON messages FOR UPDATE USING (auth.uid() = receiver_id);
 
 -- ============================================
--- 6. PAYMENTS TABLE
+-- 5. PAYMENTS
 -- ============================================
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
@@ -146,14 +111,10 @@ CREATE TABLE payments (
 );
 
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can read own payments or admin all"
-    ON payments FOR SELECT USING (
-        auth.uid() = user_id OR is_admin()
-    );
+CREATE POLICY "Read own or admin" ON payments FOR SELECT USING (auth.uid() = user_id OR is_admin());
 
 -- ============================================
--- 7. WISHLIST TABLE
+-- 6. WISHLIST
 -- ============================================
 CREATE TABLE wishlist (
     id SERIAL PRIMARY KEY,
@@ -164,16 +125,8 @@ CREATE TABLE wishlist (
 );
 
 ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Read own" ON wishlist FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Add own" ON wishlist FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Remove own" ON wishlist FOR DELETE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can read own wishlist"
-    ON wishlist FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can add to own wishlist"
-    ON wishlist FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can remove from own wishlist"
-    ON wishlist FOR DELETE USING (auth.uid() = user_id);
-
--- ============================================
--- DONE! Register users via the app.
--- ============================================
+-- DONE!
