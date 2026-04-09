@@ -15,3 +15,6 @@ Thumbs.db
 
 # Environment
 .env
+
+# Seed script (one-time use)
+seed-demo-users.html

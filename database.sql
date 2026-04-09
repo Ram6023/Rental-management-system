@@ -1,23 +1,20 @@
 -- ============================================
 -- RentEase — Supabase Auth + PostgreSQL Schema
 -- ============================================
--- Run this in Supabase SQL Editor
--- Dashboard → SQL Editor → New Query → Paste & Run
+-- CLEAN UP any previous failed attempts first
+-- ============================================
+DROP TABLE IF EXISTS wishlist CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS properties CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP FUNCTION IF EXISTS is_admin();
+DROP FUNCTION IF EXISTS handle_new_user() CASCADE;
 
 -- ============================================
--- 1. HELPER FUNCTION: Check if current user is admin
+-- 1. PROFILES TABLE
 -- ============================================
-CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
-
--- ============================================
--- 2. PROFILES TABLE (linked to auth.users)
--- ============================================
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT DEFAULT '',
@@ -37,7 +34,19 @@ CREATE POLICY "Allow insert for authenticated users"
     ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- ============================================
--- 3. AUTO-CREATE PROFILE ON SIGNUP (Trigger)
+-- 2. HELPER FUNCTION (uses plpgsql for late binding)
+-- ============================================
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================
+-- 3. AUTO-CREATE PROFILE ON SIGNUP
 -- ============================================
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
@@ -60,7 +69,7 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
 -- ============================================
 -- 4. PROPERTIES TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS properties (
+CREATE TABLE properties (
     id SERIAL PRIMARY KEY,
     owner_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
@@ -99,7 +108,7 @@ CREATE POLICY "Owners can delete own properties"
 -- ============================================
 -- 5. MESSAGES TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS messages (
+CREATE TABLE messages (
     id SERIAL PRIMARY KEY,
     sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     receiver_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -125,7 +134,7 @@ CREATE POLICY "Receivers can mark as read"
 -- ============================================
 -- 6. PAYMENTS TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS payments (
+CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     property_id INT DEFAULT NULL REFERENCES properties(id) ON DELETE SET NULL,
@@ -146,7 +155,7 @@ CREATE POLICY "Users can read own payments or admin all"
 -- ============================================
 -- 7. WISHLIST TABLE
 -- ============================================
-CREATE TABLE IF NOT EXISTS wishlist (
+CREATE TABLE wishlist (
     id SERIAL PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
     property_id INT NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
@@ -166,13 +175,5 @@ CREATE POLICY "Users can remove from own wishlist"
     ON wishlist FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================
--- 8. SUPABASE STORAGE BUCKET FOR IMAGES
--- ============================================
--- Run this separately if storage isn't already set up:
--- INSERT INTO storage.buckets (id, name, public) VALUES ('property-images', 'property-images', true);
-
--- ============================================
--- NOTE: Sample data must be inserted AFTER you
--- create real users via Supabase Auth (sign up).
--- The profiles will auto-create via trigger.
+-- DONE! Register users via the app.
 -- ============================================
