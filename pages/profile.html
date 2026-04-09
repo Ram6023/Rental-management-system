@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | RentEase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="main-content">
+        <section class="auth-section">
+            <div class="container">
+                <div class="auth-card" id="profileCard">
+                    <div class="text-center py-4"><div class="spinner-border"></div></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer id="footer"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        initPage({
+            auth: true,
+            onReady: async (profile) => {
+                const user = await getUser();
+                document.getElementById('profileCard').innerHTML = `
+                    <div class="auth-header">
+                        <div class="user-avatar mx-auto mb-3" style="width:80px;height:80px;font-size:2rem;">${profile.name.charAt(0).toUpperCase()}</div>
+                        <h2>${escHtml(profile.name)}</h2>
+                        <p><span class="badge bg-primary">${capitalize(profile.role)}</span></p>
+                        <small class="text-muted">Joined ${new Date(profile.created_at).toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' })}</small>
+                    </div>
+                    <div id="profileAlert"></div>
+                    <form id="profileForm">
+                        <div class="mb-3"><label class="form-label">Full Name</label><input type="text" class="form-control" id="pName" value="${escHtml(profile.name)}" required></div>
+                        <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" value="${escHtml(user.email)}" disabled><small class="text-muted">Email cannot be changed</small></div>
+                        <div class="mb-3"><label class="form-label">Phone</label><input type="tel" class="form-control" id="pPhone" value="${escHtml(profile.phone || '')}"></div>
+                        <hr>
+                        <h6 class="fw-bold mb-3">Change Password</h6>
+                        <div class="mb-3"><label class="form-label">New Password</label><input type="password" class="form-control" id="pPassword" placeholder="Leave blank to keep current" minlength="6"></div>
+                        <button type="submit" class="btn btn-primary w-100" id="profileBtn"><i class="bi bi-check-circle"></i> Update Profile</button>
+                    </form>`;
+
+                document.getElementById('profileForm').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const btn = document.getElementById('profileBtn');
+                    const alert = document.getElementById('profileAlert');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Updating...';
+
+                    try {
+                        const name = document.getElementById('pName').value;
+                        const phone = document.getElementById('pPhone').value;
+                        const newPassword = document.getElementById('pPassword').value;
+
+                        // Update profile in profiles table
+                        const { error } = await sb.from('profiles').update({ name, phone }).eq('id', user.id);
+                        if (error) throw error;
+
+                        // Update password via Supabase Auth
+                        if (newPassword) {
+                            const { error: pwErr } = await sb.auth.updateUser({ password: newPassword });
+                            if (pwErr) throw pwErr;
+                        }
+
+                        alert.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Profile updated!</div>';
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (err) {
+                        alert.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-check-circle"></i> Update Profile';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

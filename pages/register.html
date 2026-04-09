@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | RentEase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="main-content">
+        <section class="auth-section">
+            <div class="container">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-icon"><i class="bi bi-person-plus"></i></div>
+                        <h2>Create Account</h2>
+                        <p>Join RentEase and get started today</p>
+                    </div>
+                    <div id="registerAlert"></div>
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="name" placeholder="John Doe" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" class="form-control" id="phone" placeholder="9876543210" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">I am a</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check flex-fill p-3 rounded-3" style="border:2px solid var(--primary); cursor:pointer;" id="roleTenantCard">
+                                    <input class="form-check-input" type="radio" name="role" id="roleTenant" value="tenant" checked>
+                                    <label class="form-check-label w-100" for="roleTenant" style="cursor:pointer;">
+                                        <div class="fw-bold"><i class="bi bi-search-heart text-primary"></i> Tenant</div>
+                                        <small class="text-muted">Looking for a home</small>
+                                    </label>
+                                </div>
+                                <div class="form-check flex-fill p-3 rounded-3" style="border:2px solid var(--border-color); cursor:pointer;" id="roleOwnerCard">
+                                    <input class="form-check-input" type="radio" name="role" id="roleOwner" value="owner">
+                                    <label class="form-check-label w-100" for="roleOwner" style="cursor:pointer;">
+                                        <div class="fw-bold"><i class="bi bi-house-add text-success"></i> Owner</div>
+                                        <small class="text-muted">I want to list property</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" placeholder="Min 6 characters" minlength="6" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control" id="confirmPassword" placeholder="Re-enter password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="registerBtn">
+                            <i class="bi bi-rocket-takeoff"></i> Get Started
+                        </button>
+                    </form>
+                    <div class="auth-divider">or</div>
+                    <div class="text-center">
+                        <p class="mb-2 small text-muted">Already have an account?</p>
+                        <a href="login.html" class="btn btn-outline-primary w-100"><i class="bi bi-box-arrow-in-right"></i> Sign In</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer id="footer"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        // Highlight role card
+        document.querySelectorAll('input[name="role"]').forEach(r => {
+            r.addEventListener('change', function() {
+                document.getElementById('roleTenantCard').style.borderColor = 'var(--border-color)';
+                document.getElementById('roleOwnerCard').style.borderColor = 'var(--border-color)';
+                document.getElementById(this.value === 'tenant' ? 'roleTenantCard' : 'roleOwnerCard').style.borderColor = 'var(--primary)';
+            });
+        });
+
+        initPage({
+            onReady: async () => {
+                await redirectIfLoggedIn();
+
+                document.getElementById('registerForm').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const alert = document.getElementById('registerAlert');
+                    const btn = document.getElementById('registerBtn');
+                    const pw = document.getElementById('password').value;
+                    const cpw = document.getElementById('confirmPassword').value;
+
+                    if (pw !== cpw) {
+                        alert.innerHTML = '<div class="alert alert-danger">Passwords do not match</div>';
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating account...';
+
+                    try {
+                        const name = document.getElementById('name').value;
+                        const email = document.getElementById('email').value;
+                        const phone = document.getElementById('phone').value;
+                        const role = document.querySelector('input[name="role"]:checked').value;
+
+                        await signUp(email, pw, name, phone, role);
+
+                        // Auto-login after signup
+                        await signIn(email, pw);
+                        const profile = await getProfile();
+
+                        alert.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Welcome to RentEase! 🎉</div>';
+                        setTimeout(() => redirectByRole(profile?.role || role), 800);
+                    } catch (err) {
+                        alert.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> ${err.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-rocket-takeoff"></i> Get Started';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="RentEase - Find Your Perfect Rental Home. Browse verified properties with smart search.">
+    <title>RentEase — Find Your Perfect Rental Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <main class="main-content">
+        <!-- Landing Hero -->
+        <section class="hero-section" style="min-height:100vh; display:flex; align-items:center;">
+            <div class="hero-bg-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+            </div>
+            <div class="container position-relative" style="z-index:2;">
+                <div class="row align-items-center">
+                    <div class="col-lg-7 text-center text-lg-start">
+                        <div class="hero-badge"><span class="badge-dot"></span> #1 Trusted Rental Platform</div>
+                        <h1 class="hero-title" style="font-size:clamp(2.5rem, 6vw, 4.5rem);">
+                            Find Your<br><span class="highlight">Perfect Rental</span><br>Home Today
+                        </h1>
+                        <p class="hero-subtitle mx-auto mx-lg-0" style="font-size:1.15rem;">
+                            Discover hundreds of verified rental properties. Whether you're a tenant
+                            looking for a dream home or an owner listing your property — RentEase makes it simple.
+                        </p>
+                        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mt-4"
+                             style="animation: fadeInUp 0.8s ease 0.3s backwards;">
+                            <a href="./pages/register.html" class="btn btn-primary btn-lg px-5 py-3"
+                               style="font-size:1.1rem; border-radius:var(--radius-lg); box-shadow:0 8px 25px rgba(99,102,241,0.4);">
+                                <i class="bi bi-rocket-takeoff"></i> Get Started
+                            </a>
+                            <a href="./pages/login.html" class="btn btn-outline-light btn-lg px-4 py-3"
+                               style="font-size:1.1rem; border-radius:var(--radius-lg); border-width:2px;">
+                                <i class="bi bi-box-arrow-in-right"></i> Sign In
+                            </a>
+                        </div>
+                        <div class="hero-stats mt-5">
+                            <div class="hero-stat"><div class="stat-number">500+</div><div class="stat-label">Properties</div></div>
+                            <div class="hero-stat"><div class="stat-number">1200+</div><div class="stat-label">Happy Tenants</div></div>
+                            <div class="hero-stat"><div class="stat-number">50+</div><div class="stat-label">Cities</div></div>
+                            <div class="hero-stat"><div class="stat-number">98%</div><div class="stat-label">Satisfaction</div></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 mt-5 mt-lg-0">
+                        <div class="d-flex flex-column gap-3" style="animation: fadeInUp 0.8s ease 0.4s backwards;">
+                            <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.12); border-radius:var(--radius-lg);">
+                                <div style="width:50px;height:50px;border-radius:var(--radius-md);background:linear-gradient(135deg,#6366f1,#818cf8);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;"><i class="bi bi-search-heart"></i></div>
+                                <div><h6 class="mb-0" style="color:#fff;font-weight:700;">Smart Search</h6><small style="color:rgba(255,255,255,0.6);">Filter by location, budget, and BHK</small></div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.12); border-radius:var(--radius-lg);">
+                                <div style="width:50px;height:50px;border-radius:var(--radius-md);background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;"><i class="bi bi-shield-check"></i></div>
+                                <div><h6 class="mb-0" style="color:#fff;font-weight:700;">Verified Listings</h6><small style="color:rgba(255,255,255,0.6);">All properties verified for authenticity</small></div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.12); border-radius:var(--radius-lg);">
+                                <div style="width:50px;height:50px;border-radius:var(--radius-md);background:linear-gradient(135deg,#f59e0b,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;"><i class="bi bi-whatsapp"></i></div>
+                                <div><h6 class="mb-0" style="color:#fff;font-weight:700;">Instant Contact</h6><small style="color:rgba(255,255,255,0.6);">Chat with owners directly via WhatsApp</small></div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3" style="background:rgba(255,255,255,0.08); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.12); border-radius:var(--radius-lg);">
+                                <div style="width:50px;height:50px;border-radius:var(--radius-md);background:linear-gradient(135deg,#06b6d4,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff;flex-shrink:0;"><i class="bi bi-people"></i></div>
+                                <div><h6 class="mb-0" style="color:#fff;font-weight:700;">For Everyone</h6><small style="color:rgba(255,255,255,0.6);">Separate dashboards for Tenants & Owners</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="footer"></footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./assets/js/config.js"></script>
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/app.js"></script>
+    <script>
+        // AUTO-REDIRECT: If already logged in, go to dashboard
+        initPage({
+            onReady: async () => { await redirectIfLoggedIn(); }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Property | RentEase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="main-content">
+        <section class="dashboard-section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="page-header mb-4"><h1><i class="bi bi-house-add text-primary"></i> Add New Property</h1><p class="text-muted">Fill in the details to list your property</p></div>
+                        <div class="auth-card" style="max-width:100%;">
+                            <div id="addAlert"></div>
+                            <form id="addPropertyForm">
+                                <div class="row g-3">
+                                    <div class="col-12"><label class="form-label">Property Title *</label><input type="text" class="form-control" id="title" placeholder="e.g. Luxury 3BHK Villa" required></div>
+                                    <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" id="description" rows="4" placeholder="Describe the property..."></textarea></div>
+                                    <div class="col-md-6"><label class="form-label">Location *</label><input type="text" class="form-control" id="location" placeholder="e.g. Madhapur, Hyderabad" required></div>
+                                    <div class="col-md-6"><label class="form-label">Monthly Rent (₹) *</label><input type="number" class="form-control" id="price" placeholder="25000" min="1000" required></div>
+                                    <div class="col-md-6"><label class="form-label">BHK *</label><select class="form-select" id="bhk" required><option value="">Select BHK</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+                                    <div class="col-md-6"><label class="form-label">WhatsApp Number *</label><input type="tel" class="form-control" id="phone" placeholder="9876543210" required></div>
+                                    <div class="col-md-6"><label class="form-label">Status</label><select class="form-select" id="status"><option value="available">Available</option><option value="rented">Rented</option><option value="maintenance">Maintenance</option></select></div>
+                                    <div class="col-md-6"><label class="form-label">Featured?</label><select class="form-select" id="is_featured"><option value="false">No</option><option value="true">Yes</option></select></div>
+                                    <div class="col-12">
+                                        <label class="form-label">Property Image</label>
+                                        <input type="file" class="form-control" id="imageFile" accept="image/*" onchange="previewImage(this,'addPreview')">
+                                        <img id="addPreview" class="mt-2 rounded" style="display:none;max-height:200px;">
+                                    </div>
+                                    <div class="col-12"><button type="submit" class="btn btn-primary w-100 py-2" id="addBtn"><i class="bi bi-plus-circle"></i> Add Property</button></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer id="footer"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        initPage({
+            auth: true, role: 'owner',
+            onReady: async () => {
+                document.getElementById('addPropertyForm').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const btn = document.getElementById('addBtn');
+                    const alert = document.getElementById('addAlert');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
+
+                    try {
+                        const user = await getUser();
+                        let imageUrl = '';
+                        const file = document.getElementById('imageFile').files[0];
+                        if (file) imageUrl = await uploadPropertyImage(file);
+
+                        const { error } = await sb.from('properties').insert({
+                            owner_id: user.id,
+                            title: document.getElementById('title').value,
+                            description: document.getElementById('description').value,
+                            location: document.getElementById('location').value,
+                            price: parseFloat(document.getElementById('price').value),
+                            bhk: parseInt(document.getElementById('bhk').value),
+                            phone: document.getElementById('phone').value,
+                            status: document.getElementById('status').value,
+                            is_featured: document.getElementById('is_featured').value === 'true',
+                            image_url: imageUrl
+                        });
+
+                        if (error) throw error;
+                        alert.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Property added successfully!</div>';
+                        document.getElementById('addPropertyForm').reset();
+                        document.getElementById('addPreview').style.display = 'none';
+                        setTimeout(() => window.location.href = 'my-properties.html', 1500);
+                    } catch (err) {
+                        alert.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Property';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

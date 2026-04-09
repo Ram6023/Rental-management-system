@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | RentEase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="main-content">
+        <section class="dashboard-section">
+            <div class="container">
+                <h1 class="mb-4" style="font-family:var(--font-display);font-weight:800;font-size:1.8rem;"><i class="bi bi-speedometer2 text-primary"></i> Admin Dashboard</h1>
+
+                <div class="row g-4 mb-4" id="adminStats"></div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-5"><div class="chart-card"><h5><i class="bi bi-people"></i> User Distribution</h5><canvas id="userChart" height="250"></canvas></div></div>
+                    <div class="col-lg-7"><div class="chart-card"><h5><i class="bi bi-bar-chart"></i> Properties by BHK</h5><canvas id="bhkChart" height="250"></canvas></div></div>
+                </div>
+
+                <div class="chart-card mb-4"><h5><i class="bi bi-people-fill"></i> All Users</h5><div class="table-responsive" id="usersTable"><div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div></div></div>
+                <div class="chart-card"><h5><i class="bi bi-buildings"></i> Recent Properties</h5><div class="table-responsive" id="propsTable"><div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></div></div></div>
+            </div>
+        </section>
+    </main>
+    <footer id="footer"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/app.js"></script>
+    <script>
+        initPage({
+            auth: true, role: 'admin',
+            onReady: async () => {
+                const [{ data: users }, { data: properties }, { data: payments }] = await Promise.all([
+                    sb.from('profiles').select('*').order('created_at', { ascending: false }),
+                    sb.from('properties').select('*').order('created_at', { ascending: false }).limit(20),
+                    sb.from('payments').select('amount,status')
+                ]);
+
+                const allUsers = users || [];
+                const allProps = properties || [];
+                const allPay = payments || [];
+                const revenue = allPay.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+                const roles = { admin: 0, owner: 0, tenant: 0 };
+                allUsers.forEach(u => roles[u.role] = (roles[u.role] || 0) + 1);
+
+                document.getElementById('adminStats').innerHTML = `
+                    <div class="col-lg-3 col-md-6"><div class="stat-card users"><div class="stat-label">Total Users</div><div class="stat-value">${allUsers.length}</div></div></div>
+                    <div class="col-lg-3 col-md-6"><div class="stat-card properties"><div class="stat-label">Properties</div><div class="stat-value">${allProps.length}</div></div></div>
+                    <div class="col-lg-3 col-md-6"><div class="stat-card payments"><div class="stat-label">Payments</div><div class="stat-value">${allPay.filter(p=>p.status==='paid').length}</div></div></div>
+                    <div class="col-lg-3 col-md-6"><div class="stat-card revenue"><div class="stat-label">Revenue</div><div class="stat-value">${formatPrice(revenue)}</div></div></div>`;
+
+                new Chart(document.getElementById('userChart'), {
+                    type: 'doughnut',
+                    data: { labels: ['Admins', 'Owners', 'Tenants'], datasets: [{ data: [roles.admin, roles.owner, roles.tenant], backgroundColor: ['#ef4444', '#10b981', '#6366f1'], borderWidth: 0 }] },
+                    options: { responsive: true, cutout: '60%', plugins: { legend: { position: 'bottom' } } }
+                });
+
+                const bhkC = {};
+                allProps.forEach(p => bhkC[p.bhk] = (bhkC[p.bhk] || 0) + 1);
+                const sB = Object.keys(bhkC).sort();
+                new Chart(document.getElementById('bhkChart'), {
+                    type: 'bar',
+                    data: { labels: sB.map(k => k + ' BHK'), datasets: [{ data: sB.map(k => bhkC[k]), backgroundColor: ['#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3'], borderRadius: 8, barThickness: 50 }] },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                document.getElementById('usersTable').innerHTML = `<table class="table"><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead><tbody>${allUsers.map((u,i) => `
+                    <tr><td>${i+1}</td><td>${escHtml(u.name)}</td><td class="text-muted small">${escHtml(u.id).substring(0,8)}...</td><td><span class="badge bg-${u.role==='admin'?'danger':u.role==='owner'?'success':'primary'}">${capitalize(u.role)}</span></td><td>${new Date(u.created_at).toLocaleDateString('en-IN',{month:'short',day:'numeric',year:'numeric'})}</td></tr>`).join('')}</tbody></table>`;
+
+                document.getElementById('propsTable').innerHTML = `<table class="table"><thead><tr><th>#</th><th>Title</th><th>Location</th><th>Price</th><th>Status</th></tr></thead><tbody>${allProps.map((p,i) => `
+                    <tr><td>${i+1}</td><td><a href="property-detail.html?id=${p.id}" class="text-primary text-decoration-none">${escHtml(p.title)}</a></td><td>${escHtml(p.location)}</td><td>${formatPrice(p.price)}</td><td><span class="badge badge-${p.status==='available'?'paid':'pending'}">${capitalize(p.status)}</span></td></tr>`).join('')}</tbody></table>`;
+            }
+        });
+    </script>
+</body>
+</html>
