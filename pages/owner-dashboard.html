@@ -105,6 +105,7 @@
                             <td>${p.bhk} BHK</td>
                             <td><span class="badge badge-${p.status === 'available' ? 'paid' : 'pending'}">${capitalize(p.status)}</span></td>
                             <td>
+                                <a href="rent-analysis.html?id=${p.id}" class="btn btn-outline-info btn-sm me-1" title="AI Analysis"><i class="bi bi-cpu"></i></a>
                                 <a href="edit-property.html?id=${p.id}" class="btn btn-outline-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil"></i></a>
                                 <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteProperty(${p.id}, '${escHtml(p.title)}')" title="Delete"><i class="bi bi-trash"></i></button>
                             </td>

@@ -88,6 +88,7 @@
                                 <div class="d-grid gap-2">
                                     <a href="https://wa.me/${p.phone}?text=${encodeURIComponent("Hi, I'm interested in: " + p.title + " (" + formatPrice(p.price) + "/month)")}" target="_blank" class="btn btn-whatsapp py-2"><i class="bi bi-whatsapp"></i> Contact on WhatsApp</a>
                                     ${user && owner.id ? `<a href="messages.html?user_id=${owner.id}&property_id=${p.id}" class="btn btn-outline-primary py-2"><i class="bi bi-chat-dots"></i> Send Message</a>` : ''}
+                                    <a href="rent-analysis.html?id=${p.id}" class="btn btn-outline-info py-2" style="border-color: #0dcaf0; color: #0dcaf0;"><i class="bi bi-cpu"></i> Rent AI Analysis</a>
                                 </div>
                             </div>
                         </div>
